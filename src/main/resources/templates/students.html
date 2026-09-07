@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quản Lý Sinh Viên</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { padding: 25px; background-color: #f8f9fa; }
+        .card { box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h2 class="mb-4 text-primary text-center">DANH SÁCH QUẢN LÝ SINH VIÊN</h2>
+
+    <!-- Form Thêm Sinh Viên -->
+    <div class="card mb-4">
+        <div class="card-header bg-primary text-white">Thêm Sinh Viên Mới</div>
+        <div class="card-body">
+            <form id="addStudentForm" class="row g-3">
+                <div class="col-md-2">
+                    <input type="text" class="form-control" id="studentCode" placeholder="Mã SV" required>
+                </div>
+                <div class="col-md-3">
+                    <input type="text" class="form-control" id="fullName" placeholder="Họ và Tên" required>
+                </div>
+                <div class="col-md-3">
+                    <input type="email" class="form-control" id="email" placeholder="Email" required>
+                </div>
+                <div class="col-md-2">
+                    <input type="text" class="form-control" id="phone" placeholder="Số điện thoại">
+                </div>
+                <div class="col-md-2">
+                    <input type="text" class="form-control" id="className" placeholder="Lớp">
+                </div>
+                <div class="col-12 text-end">
+                    <button type="button" class="btn btn-success" onclick="addStudent()">+ Thêm Sinh Viên</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Thanh tìm kiếm -->
+    <div class="row mb-3">
+        <div class="col-md-6">
+            <div class="input-group">
+                <input type="text" id="searchInput" class="form-control" placeholder="Tìm theo mã, tên, email, SĐT...">
+                <button class="btn btn-outline-secondary" onclick="searchStudents()">Tìm kiếm</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bảng danh sách -->
+    <div class="card">
+        <div class="card-body">
+            <table class="table table-hover table-striped">
+                <thead class="table-dark">
+                    <tr>
+                        <th>Mã SV</th>
+                        <th>Họ Tên</th>
+                        <th>Email</th>
+                        <th>Số ĐT</th>
+                        <th>Lớp</th>
+                        <th>Thao tác</th>
+                    </tr>
+                </thead>
+                <tbody id="studentTableBody">
+                    <!-- Dữ liệu JS sẽ đổ vào đây -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script>
+    const API_URL = "/api/students";
+
+    // Load danh sách sinh viên khi vào trang
+    document.addEventListener("DOMContentLoaded", loadStudents);
+
+    function loadStudents() {
+        fetch(API_URL)
+            .then(res => res.json())
+            .then(data => renderTable(data))
+            .catch(err => console.error("Lỗi tải sinh viên:", err));
+    }
+
+    function renderTable(students) {
+        const tbody = document.getElementById("studentTableBody");
+        tbody.innerHTML = "";
+        students.forEach(s => {
+            tbody.innerHTML += `
+                <tr>
+                    <td><strong>${s.studentCode}</strong></td>
+                    <td>${s.fullName}</td>
+                    <td>${s.email}</td>
+                    <td>${s.phone || ''}</td>
+                    <td>${s.className || ''}</td>
+                    <td>
+                        <button class="btn btn-sm btn-danger" onclick="deleteStudent('${s.id}')">Xóa</button>
+                    </td>
+                </tr>
+            `;
+        });
+    }
+
+    // Tìm kiếm
+    function searchStudents() {
+        const keyword = document.getElementById("searchInput").value;
+        fetch(`${API_URL}?keyword=${encodeURIComponent(keyword)}`)
+            .then(res => res.json())
+            .then(data => renderTable(data));
+    }
+
+    // Thêm sinh viên
+    function addStudent() {
+        const student = {
+            studentCode: document.getElementById("studentCode").value,
+            fullName: document.getElementById("fullName").value,
+            email: document.getElementById("email").value,
+            phone: document.getElementById("phone").value,
+            className: document.getElementById("className").value
+        };
+
+        fetch(API_URL, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(student)
+        })
+        .then(res => {
+            if (res.ok) {
+                alert("Thêm sinh viên thành công!");
+                document.getElementById("addStudentForm").reset();
+                loadStudents();
+            } else {
+                alert("Lỗi khi thêm sinh viên (kiểm tra trùng mã hoặc email)!");
+            }
+        });
+    }
+
+    // Xóa sinh viên
+    function deleteStudent(id) {
+        if (confirm("Bạn có chắc chắn muốn xóa sinh viên này?")) {
+            fetch(`${API_URL}/${id}`, { method: "DELETE" })
+                .then(res => {
+                    if (res.ok) {
+                        alert("Đã xóa sinh viên!");
+                        loadStudents();
+                    }
+                });
+        }
+    }
+</script>
+</body>
+</html>
