@@ -10,31 +10,43 @@ import com.example.demo.service.StudentService;
 @RestController
 @RequestMapping("/api/students")
 public class StudentController {
+
     @Autowired
     private StudentService studentService;
 
+    //API lấy danh sách sinh viên
     @GetMapping
-    public List<Student> listStudents(@RequestParam(required = false) String keyword) {
-        return studentService.search(keyword);
+    public List<Student> getAllStudents() {
+        return studentService.getAll();
     }
 
+    //API lấy sinh viên theo ID
     @GetMapping("/{id}")
-    public Student getStudent(@PathVariable UUID id) {
+    public Student getStudentById(@PathVariable UUID id) {
         return studentService.getById(id);
     }
 
+    //API tìm kiếm sinh viên theo tên
+    @GetMapping("/search")
+    public List<Student> searchStudents(@RequestParam String keyword) {
+        return studentService.search(keyword);
+    }
+
+    //API Thêm sinh viên
     @PostMapping
     public Student createStudent(@RequestBody Student student) {
         return studentService.save(student);
     }
 
-    @PutMapping("/{id}")
+    // API cập nhật sinh viên
+    @PostMapping("/update/{id}")
     public Student updateStudent(@PathVariable UUID id, @RequestBody Student student) {
         student.setId(id);
         return studentService.save(student);
     }
 
-    @DeleteMapping("/{id}")
+    //API Xóa sinh viên
+    @PostMapping("/delete/{id}")
     public void deleteStudent(@PathVariable UUID id) {
         studentService.delete(id);
     }

@@ -12,13 +12,14 @@
 </head>
 <body>
 <div class="container">
-    <h2 class="mb-4 text-primary text-center">DANH SÁCH QUẢN LÝ SINH VIÊN</h2>
+    <h2 class="mb-4 text-primary text-center">HỆ THỐNG QUẢN LÝ SINH VIÊN</h2>
 
-    <!-- Form Thêm Sinh Viên -->
+    //thêm mới sinh viên
     <div class="card mb-4">
-        <div class="card-header bg-primary text-white">Thêm Sinh Viên Mới</div>
+        <div class="card-header bg-primary text-white" id="formTitle">Thêm Sinh Viên Mới</div>
         <div class="card-body">
-            <form id="addStudentForm" class="row g-3">
+            <form id="studentForm" class="row g-3">
+                <input type="hidden" id="studentId">
                 <div class="col-md-2">
                     <input type="text" class="form-control" id="studentCode" placeholder="Mã SV" required>
                 </div>
@@ -35,23 +36,24 @@
                     <input type="text" class="form-control" id="className" placeholder="Lớp">
                 </div>
                 <div class="col-12 text-end">
-                    <button type="button" class="btn btn-success" onclick="addStudent()">+ Thêm Sinh Viên</button>
+                    <button type="button" class="btn btn-secondary me-2" onclick="resetForm()">Hủy</button>
+                    <button type="button" class="btn btn-success" id="btnSave" onclick="saveStudent()">Lưu Sinh Viên</button>
                 </div>
             </form>
         </div>
     </div>
 
-    <!-- Thanh tìm kiếm -->
+    // Thanh tìm kiếm sinh viên
     <div class="row mb-3">
         <div class="col-md-6">
             <div class="input-group">
-                <input type="text" id="searchInput" class="form-control" placeholder="Tìm theo mã, tên, email, SĐT...">
+                <input type="text" id="searchInput" class="form-control" placeholder="Nhập tên sinh viên cần tìm...">
                 <button class="btn btn-outline-secondary" onclick="searchStudents()">Tìm kiếm</button>
             </div>
         </div>
     </div>
 
-    <!-- Bảng danh sách -->
+    // Bảng danh sách sinh viên
     <div class="card">
         <div class="card-body">
             <table class="table table-hover table-striped">
@@ -66,7 +68,6 @@
                     </tr>
                 </thead>
                 <tbody id="studentTableBody">
-                    <!-- Dữ liệu JS sẽ đổ vào đây -->
                 </tbody>
             </table>
         </div>
@@ -76,16 +77,16 @@
 <script>
     const API_URL = "/api/students";
 
-    // Load danh sách sinh viên khi vào trang
+    // Khởi chạy khi tải trang
     document.addEventListener("DOMContentLoaded", loadStudents);
 
     function loadStudents() {
         fetch(API_URL)
             .then(res => res.json())
-            .then(data => renderTable(data))
-            .catch(err => console.error("Lỗi tải sinh viên:", err));
+            .then(data => renderTable(data));
     }
 
+    // Hiển thị dữ liệu lên bảng
     function renderTable(students) {
         const tbody = document.getElementById("studentTableBody");
         tbody.innerHTML = "";
@@ -98,6 +99,7 @@
                     <td>${s.phone || ''}</td>
                     <td>${s.className || ''}</td>
                     <td>
+                        <button class="btn btn-sm btn-warning me-1" onclick="editStudent('${s.id}')">Sửa</button>
                         <button class="btn btn-sm btn-danger" onclick="deleteStudent('${s.id}')">Xóa</button>
                     </td>
                 </tr>
@@ -105,16 +107,17 @@
         });
     }
 
-    // Tìm kiếm
+    //Tìm kiếm
     function searchStudents() {
         const keyword = document.getElementById("searchInput").value;
-        fetch(`${API_URL}?keyword=${encodeURIComponent(keyword)}`)
+        fetch(`${API_URL}/search?keyword=${encodeURIComponent(keyword)}`)
             .then(res => res.json())
             .then(data => renderTable(data));
     }
 
-    // Thêm sinh viên
-    function addStudent() {
+    //Thêm mới hoặc Cập nhật
+    function saveStudent() {
+        const id = document.getElementById("studentId").value;
         const student = {
             studentCode: document.getElementById("studentCode").value,
             fullName: document.getElementById("fullName").value,
@@ -123,26 +126,45 @@
             className: document.getElementById("className").value
         };
 
-        fetch(API_URL, {
+        const url = id ? `${API_URL}/update/${id}` : API_URL; 
+
+        fetch(url, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(student)
-        })
-        .then(res => {
+        }).then(res => {
             if (res.ok) {
-                alert("Thêm sinh viên thành công!");
-                document.getElementById("addStudentForm").reset();
+                alert(id ? "Cập nhật thành công!" : "Thêm mới thành công!");
+                resetForm();
                 loadStudents();
             } else {
-                alert("Lỗi khi thêm sinh viên (kiểm tra trùng mã hoặc email)!");
+                alert("Lỗi! Vui lòng kiểm tra lại.");
             }
         });
     }
 
-    // Xóa sinh viên
+    // Đổ dữ liệu lên form để chuẩn bị cập nhật
+    function editStudent(id) {
+        fetch(`${API_URL}/${id}`)
+            .then(res => res.json())
+            .then(s => {
+                document.getElementById("studentId").value = s.id;
+                document.getElementById("studentCode").value = s.studentCode;
+                document.getElementById("fullName").value = s.fullName;
+                document.getElementById("email").value = s.email;
+                document.getElementById("phone").value = s.phone;
+                document.getElementById("className").value = s.className;
+                
+                document.getElementById("formTitle").innerText = "Cập Nhật Sinh Viên";
+                document.getElementById("btnSave").innerText = "Lưu Thay Đổi";
+                document.getElementById("btnSave").classList.replace("btn-success", "btn-warning");
+            });
+    }
+
+    //Xóa sinh viên
     function deleteStudent(id) {
         if (confirm("Bạn có chắc chắn muốn xóa sinh viên này?")) {
-            fetch(`${API_URL}/${id}`, { method: "DELETE" })
+            fetch(`${API_URL}/delete/${id}`, { method: "POST" })
                 .then(res => {
                     if (res.ok) {
                         alert("Đã xóa sinh viên!");
@@ -150,6 +172,14 @@
                     }
                 });
         }
+    }
+
+    function resetForm() {
+        document.getElementById("studentForm").reset();
+        document.getElementById("studentId").value = "";
+        document.getElementById("formTitle").innerText = "Thêm Sinh Viên Mới";
+        document.getElementById("btnSave").innerText = "Lưu Sinh Viên";
+        document.getElementById("btnSave").classList.replace("btn-warning", "btn-success");
     }
 </script>
 </body>
