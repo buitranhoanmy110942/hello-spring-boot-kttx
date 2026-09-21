@@ -14,39 +14,39 @@ public class StudentController {
     @Autowired
     private StudentService studentService;
 
-    //API lấy danh sách sinh viên
+    // API lấy danh sách sinh viên (GET)
     @GetMapping
     public List<Student> getAllStudents() {
         return studentService.getAll();
     }
 
-    //API lấy sinh viên theo ID
+    // API lấy sinh viên theo ID (GET)
     @GetMapping("/{id}")
     public Student getStudentById(@PathVariable UUID id) {
         return studentService.getById(id);
     }
 
-    //API tìm kiếm sinh viên theo tên
+    // API tìm kiếm sinh viên theo tên (GET)
     @GetMapping("/search")
     public List<Student> searchStudents(@RequestParam String keyword) {
         return studentService.search(keyword);
     }
 
-    //API Thêm sinh viên
+    // API Thêm sinh viên (POST - Xanh lá)
     @PostMapping
     public Student createStudent(@RequestBody Student student) {
         return studentService.save(student);
     }
 
-    // API cập nhật sinh viên
-    @PostMapping("/update/{id}")
+    // API Cập nhật sinh viên (PUT - Vàng cam)
+    @PutMapping("/{id}")
     public Student updateStudent(@PathVariable UUID id, @RequestBody Student student) {
         student.setId(id);
         return studentService.save(student);
     }
 
-    //API Xóa sinh viên
-    @PostMapping("/delete/{id}")
+    // API Xóa sinh viên (DELETE - Đỏ)
+    @DeleteMapping("/{id}")
     public void deleteStudent(@PathVariable UUID id) {
         studentService.delete(id);
     }
